@@ -12,7 +12,7 @@ const {
 
 router.get('/lwayerlist',GetAllLawyersList);
 router.put('/updatelawyer/:lawyerId',UpdateAnyLawyerData);
-router.put('/dellawyer/:lawyerId',  DeleteAnyLawyer);   //admin only
+router.post('/dellawyer/:lawyerId',  DeleteAnyLawyer);   //admin only
 router.put('/activelawyer/:lawyerId',  ActiveAnyLawyer);   //admin only
 
 

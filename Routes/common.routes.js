@@ -12,12 +12,12 @@ const {
 } = require("../Controllers/auth.controller");
 
 router.get("/lwayerlist", GetAllLawyersList);
-router.put("/updatelawyer/:lawyerId", UpdateAnyLawyerData);
-router.put("/dellawyer/:lawyerId", DeleteAnyLawyer); //admin only
+router.post("/updatelawyer/:lawyerId", UpdateAnyLawyerData);
+router.post("/dellawyer/:lawyerId", DeleteAnyLawyer); //admin only
 router.put("/activelawyer/:lawyerId", ActiveAnyLawyer); //admin only
 
 // users
 router.get("/alluser", GetAllUserList); //admin only
-router.put("/updateuser/:userId", UpdateuserData);
+router.post("/updateuser/:userId", UpdateuserData);
 
 module.exports = router;

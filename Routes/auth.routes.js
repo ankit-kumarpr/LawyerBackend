@@ -8,6 +8,6 @@ const {
 
 router.post("/register", Register);
 router.post("/login", login);
-router.put("/verify-lawyer/:lawyerId", verifyLawyer);
+router.post("/verify-lawyer/:lawyerId", verifyLawyer);
 
 module.exports = router;

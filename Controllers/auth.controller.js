@@ -1,0 +1,349 @@
+const bcrypt = require("bcrypt");
+const Admin = require("../Models/Admin.Model");
+const Lawyer = require("../Models/Lawyer.Model");
+const User = require("../Models/User.Model");
+const Counter = require("../Models/Counter");
+const { generateTokens } = require("../utils/token");
+const { sendVerificationEmail } = require("../utils/mailer");
+
+const getModel = (role) => {
+  if (role === "admin") return Admin;
+  if (role === "lawyer") return Lawyer;
+  if (role === "user") return User;
+};
+
+const getIdField = (role) => {
+  if (role === "admin") return "adminId";
+  if (role === "lawyer") return "lawyerId";
+  if (role === "user") return "userId";
+};
+
+const generateUniqueId = async (role) => {
+  const counter = await Counter.findOneAndUpdate(
+    { role },
+    { $inc: { count: 1 } },
+    { new: true, upsert: true }
+  );
+
+  return `${role.charAt(0).toUpperCase() + role.slice(1)}${counter.count
+    .toString()
+    .padStart(3, "0")}`;
+};
+
+// ---------------------------------------Register start--------------------------------
+
+const Register = async (req, res) => {
+  const {
+    role,
+    name,
+    email,
+    password,
+    phone,
+    experience,
+    licenseNumber,
+    specialization,
+    city,
+    addressline,
+    purpose,
+  } = req.body;
+
+  try {
+    const Model = getModel(role);
+    if (!Model) return res.status(400).json({ message: "Invalid role" });
+
+    const exists = await Model.findOne({ email });
+    if (exists)
+      return res.status(400).json({ message: "Email already registered" });
+
+    if (!password) {
+      return res.status(400).json({ message: "Password is required" });
+    }
+
+    const hash = await bcrypt.hash(password, 10);
+    const idField = getIdField(role);
+    const uniqueId = await generateUniqueId(role);
+
+    // Basic fields
+    const newUserData = {
+      name,
+      email,
+      password: hash,
+      phone,
+      [idField]: uniqueId,
+    };
+
+    // Lawyer-specific fields
+    if (role === "lawyer") {
+      if (!experience || !licenseNumber || !specialization || !city) {
+        return res.status(400).json({
+          message:
+            "Missing required fields for lawyer (experience, licenseNumber, specialization, city)",
+        });
+      }
+      newUserData.experience = experience;
+      newUserData.licenseNumber = licenseNumber;
+      newUserData.specialization = specialization;
+      newUserData.city = city;
+    }
+
+    // User-specific fields
+    if (role === "user") {
+      if (!city) {
+        return res.status(400).json({ message: "City is required for user" });
+      }
+      newUserData.city = city;
+      newUserData.addressline = addressline;
+      newUserData.purpose = purpose;
+    }
+
+    
+
+    const newUser = await Model.create(newUserData);
+
+    res.status(201).json({
+      message: `${role} registered successfully`,
+      user: newUser,
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Registration failed", error: err.message });
+  }
+};
+
+// ------------------------------------register end--------------------------------
+
+// ----------------------------------Login start----------------------------------
+
+const login = async (req, res) => {
+  const { email, password, role } = req.body;
+
+  try {
+    const Model = getModel(role);
+    const user = await Model.findOne({ email });
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    if (role === "lawyer" && !user.verified) {
+      return res.status(403).json({ message: "Lawyer not verified yet , Admin Verify you first" });
+    }
+
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) return res.status(401).json({ message: "Invalid password" });
+
+    const tokens = generateTokens(user, role);
+    res.json({ message: `${role} Login successful`, 
+        ...tokens,
+        user
+     });
+  } catch (err) {
+    res.status(500).json({ message: "Login failed", error: err.message });
+  }
+};
+
+// ------------------------------------Login end-------------------------------------
+
+//--------------------------- verify lawyer start ---------------------------------
+
+const verifyLawyer = async (req, res) => {
+  try {
+    const { lawyerId } = req.params;
+
+    // Search by custom field `lawyerId`, not `_id`
+    const lawyer = await Lawyer.findOne({ lawyerId });
+console.log("Lawyer data",lawyer);
+    if (!lawyer) {
+      return res.status(404).json({ message: "Lawyer not found" });
+    }
+
+    lawyer.isverified = true;
+    await lawyer.save();
+
+    await sendVerificationEmail(lawyer.email, lawyer.name);
+
+    res.status(200).json({ message: "Lawyer verified successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
+// -----------------------verify lawyer end--------------------------------------------
+
+
+// -----------------------------------Get all lawters-------------------------------------
+
+const GetAllLawyersList=async(req,res)=>{
+  try{
+   const Lawyerlist = await Lawyer.find({ is_deleted: { $ne: 1 } });;
+    if(!Lawyerlist || Lawyerlist.length==0){
+      return res.status(404).json({
+        error:true,
+        message:"No Lawyer found"
+      })
+    }
+
+
+    return res.status(200).json({
+      error:false,
+      message:"All Lawyer list",
+      data:Lawyerlist
+    })
+
+  }
+  catch(error){
+    return res.status(500).json({
+      error:true,
+      message:"Internal server error"
+    })
+  }
+}
+
+
+// ------------------------get all lawyer end---------------------------
+
+
+// ---------------------Edit Lawyer Data ---------------------------
+
+const UpdateAnyLawyerData=async(req,res)=>{
+   const { lawyerId } = req.params;
+  const updateData = req.body;
+
+  try {
+    if (!lawyerId) {
+      return res.status(400).json({
+        error: true,
+        message: "Lawyer ID is missing",
+      });
+    }
+
+    const updatedLawyer = await Lawyer.findOneAndUpdate(
+      { lawyerId: lawyerId }, 
+      updateData,
+      { new: true } 
+    );
+
+    if (!updatedLawyer) {
+      return res.status(404).json({
+        error: true,
+        message: "Lawyer not found or update failed",
+      });
+    }
+
+    return res.status(200).json({
+      error: false,
+      message: "Lawyer data updated successfully",
+      data: updatedLawyer,
+    });
+
+  } catch (error) {
+    console.error("Update error:", error);
+    return res.status(500).json({
+      error: true,
+      message: "Internal server error",
+    });
+  }
+}
+// -------------------------------Edit Lawyer data end---------------------------
+
+
+// ------------------Delete (Inactive) Lawyer data-------------------
+const DeleteAnyLawyer=async(req,res)=>{
+  const {lawyerId}=req.params;
+  try
+  {
+
+    if(!lawyerId){
+      return res.status(400).json({
+        error:true,
+        message:"LawyerId required"
+      })
+    }
+
+    const dellawyer=await Lawyer.findOneAndUpdate(
+      {lawyerId:lawyerId},
+      {is_deleted:1},
+      {new:true}
+
+    )
+
+    if(!dellawyer){
+      return res.status(404).json({
+        error:true,
+        message:"Lawyer Not found || Confilct in delete lawyer"
+      })
+    }
+
+    return res.status(200).json({
+      error:true,
+      mesage:"Lawyer Deleted Successfully..",
+      data:dellawyer
+    })
+
+  }
+  catch(error){
+    return res.status(500).json({
+      error:true,
+      message:"Internal server error"
+    })
+  }
+}
+
+
+// ---------------------end-------------------------
+
+// ----------------------Active Lawyer Api----------------
+
+const ActiveAnyLawyer=async(req,res)=>{
+
+  const {lawyerId}=req.params;
+
+  try{
+ if(!lawyerId){
+      return res.status(400).json({
+        error:true,
+        message:"LawyerId required"
+      })
+    }
+
+    const dellawyer=await Lawyer.findOneAndUpdate(
+      {lawyerId:lawyerId},
+      {is_deleted:0},
+      {new:true}
+
+    )
+
+    if(!dellawyer){
+      return res.status(404).json({
+        error:true,
+        message:"Lawyer Not found || Confilct in delete lawyer"
+      })
+    }
+
+    return res.status(200).json({
+      error:true,
+      mesage:"Lawyer Deleted Successfully..",
+      data:dellawyer
+    })
+
+  }
+  catch(error){
+    return res.status(500).json({
+      error:true,
+      message:"Internal server error"
+    })
+  }
+}
+
+
+
+
+
+
+
+module.exports = {
+  Register,
+  login,
+  verifyLawyer,
+  GetAllLawyersList,
+  UpdateAnyLawyerData,
+  DeleteAnyLawyer,
+  ActiveAnyLawyer
+};

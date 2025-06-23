@@ -26,7 +26,10 @@ const LawyerSchema = new mongoose.Schema({
     type:String,
     required:true
   },
-  password: {
+    experience:{
+        type:Number,
+        default:0
+    },  password: {
     type: String,
     required: true,
     minlegth: 8,

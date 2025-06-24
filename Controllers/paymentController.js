@@ -18,8 +18,8 @@ const createOrder = async (req, res) => {
 
     console.log("Received Data:", { lawyerId, mode, userId });
 
-    // Get lawyer details
-    const lawyer = await Lawyer.findOne({ lawyerId });  // Assuming lawyerId is a custom field
+    
+    const lawyer = await Lawyer.findOne({ lawyerId });  
 
     console.log("Lawyer Data:", lawyer);
 

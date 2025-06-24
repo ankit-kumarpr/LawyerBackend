@@ -76,8 +76,9 @@ const verifyPayment = async (req, res) => {
       bookingId,
     } = req.body;
 
+    // Step 1: Verify Razorpay signature
     const generated_signature = crypto
-      .createHmac("sha256", "N3hp4Pr3imA502zymNNyIYGI")
+      .createHmac("sha256", "N3hp4Pr3imA502zymNNyIYGI") // use your actual Razorpay key_secret here
       .update(razorpay_order_id + "|" + razorpay_payment_id)
       .digest("hex");
 
@@ -88,7 +89,7 @@ const verifyPayment = async (req, res) => {
       });
     }
 
-    // Step 1: Update booking
+    // Step 2: Update booking payment status
     const booking = await Booking.findByIdAndUpdate(
       bookingId,
       {
@@ -99,13 +100,25 @@ const verifyPayment = async (req, res) => {
     );
 
     if (!booking) {
-      return res.status(404).json({ error: true, message: "Booking not found" });
+      return res.status(404).json({
+        error: true,
+        message: "Booking not found",
+      });
     }
 
-    // Step 2: Populate lawyer
-    const populatedBooking = await Booking.findById(booking._id).populate("lawyer", "name email");
+    // Step 3: Manually fetch lawyer data using custom lawyerId (string)
+    const lawyer = await Lawyer.findOne(
+      { lawyerId: booking.lawyerId },
+      "name email"
+    );
 
-    // Step 3: Save transaction
+    // Combine booking and lawyer info manually
+    const populatedBooking = {
+      ...booking._doc,
+      lawyer: lawyer || null,
+    };
+
+    // Step 4: Save transaction record
     const transaction = new Transaction({
       userId: booking.userId,
       lawyerId: booking.lawyerId,
@@ -116,7 +129,7 @@ const verifyPayment = async (req, res) => {
 
     await transaction.save();
 
-    // Step 4: Emit to lawyer
+    // Step 5: Notify lawyer via Socket.io
     req.io.to(booking.lawyerId).emit("new-booking", {
       booking: populatedBooking,
       user: req.user,
@@ -135,8 +148,6 @@ const verifyPayment = async (req, res) => {
     });
   }
 };
-
-
 
 //
 

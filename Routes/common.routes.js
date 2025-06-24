@@ -29,6 +29,6 @@ router.get("/alluser", GetAllUserList); //admin only
 router.post("/updateuser/:userId", UpdateuserData);
 
 // order api
-router.post('/createorder',createOrder);
+router.post('/createorder',verifyToken,createOrder);
 
 module.exports = router;

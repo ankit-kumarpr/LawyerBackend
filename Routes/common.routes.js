@@ -1,7 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const { verifyToken, restrictTo } = require("../middleware/auth");
-
+const { createOrder,
+    verifyPayment} = require('../Controllers/paymentController');
+const {completeBooking,
+    getLawyerBookings,
+    getUserBookings,
+    respondToBooking,
+    getBooking} = require('../Controllers/bookingController');
+const {getUserTransactions,
+    getLawyerTransactions} = require('../Controllers/transactionController');
 const {
   GetAllLawyersList,
   UpdateAnyLawyerData,
@@ -19,5 +27,8 @@ router.put("/activelawyer/:lawyerId", ActiveAnyLawyer); //admin only
 // users
 router.get("/alluser", GetAllUserList); //admin only
 router.post("/updateuser/:userId", UpdateuserData);
+
+// order api
+router.post('/createorder',createOrder);
 
 module.exports = router;

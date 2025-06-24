@@ -14,14 +14,14 @@ const razorpay = new Razorpay({
 
 const createOrder = async (req, res) => {
   try {
-    const { lawyerId, mode, userId } = req.body;
+    const { lawyerId, mode } = req.body;
 
-    console.log("Received Data:", { lawyerId, mode, userId });
+    // console.log("Received Data:", { lawyerId, mode });
 
     
     const lawyer = await Lawyer.findOne({ lawyerId });  
 
-    console.log("Lawyer Data:", lawyer);
+    // console.log("Lawyer Data:", lawyer);
 
     if (!lawyer) {
       return res.status(404).json({
@@ -43,7 +43,7 @@ const createOrder = async (req, res) => {
 
     // Save booking to DB
     const booking = new Booking({
-      userId,
+      userId: req.user.userId,
       lawyerId,
       mode,
       amount: lawyer.consultation_fees,

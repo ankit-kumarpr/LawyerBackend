@@ -30,5 +30,5 @@ router.post("/updateuser/:userId", UpdateuserData);
 
 // order api
 router.post('/createorder',verifyToken,createOrder);
-
+router.post("/paymentverify", verifyToken, verifyPayment);
 module.exports = router;

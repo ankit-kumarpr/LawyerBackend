@@ -76,9 +76,9 @@ const verifyPayment = async (req, res) => {
       bookingId,
     } = req.body;
 
-    // Step 1: Verify Razorpay signature
+    // ✅ Step 1: Verify Razorpay signature
     const generated_signature = crypto
-      .createHmac("sha256", "N3hp4Pr3imA502zymNNyIYGI") // use your actual Razorpay key_secret here
+      .createHmac("sha256", "N3hp4Pr3imA502zymNNyIYGI") // Replace with your actual Razorpay key_secret from .env
       .update(razorpay_order_id + "|" + razorpay_payment_id)
       .digest("hex");
 
@@ -89,7 +89,7 @@ const verifyPayment = async (req, res) => {
       });
     }
 
-    // Step 2: Update booking payment status
+    // ✅ Step 2: Update booking
     const booking = await Booking.findByIdAndUpdate(
       bookingId,
       {
@@ -106,19 +106,18 @@ const verifyPayment = async (req, res) => {
       });
     }
 
-    // Step 3: Manually fetch lawyer data using custom lawyerId (string)
+    // ✅ Step 3: Manually fetch lawyer info using custom `lawyerId`
     const lawyer = await Lawyer.findOne(
       { lawyerId: booking.lawyerId },
       "name email"
     );
 
-    // Combine booking and lawyer info manually
     const populatedBooking = {
       ...booking._doc,
       lawyer: lawyer || null,
     };
 
-    // Step 4: Save transaction record
+    // ✅ Step 4: Create a transaction record
     const transaction = new Transaction({
       userId: booking.userId,
       lawyerId: booking.lawyerId,
@@ -129,11 +128,13 @@ const verifyPayment = async (req, res) => {
 
     await transaction.save();
 
-    // Step 5: Notify lawyer via Socket.io
-    req.io.to(booking.lawyerId).emit("new-booking", {
-      booking: populatedBooking,
-      user: req.user,
-    });
+    // ✅ Step 5: Emit event to lawyer's socket room
+    if (req.io) {
+      req.io.to(booking.lawyerId).emit("new-booking", {
+        booking: populatedBooking,
+        user: req.user, // assuming req.user is authenticated user
+      });
+    }
 
     return res.status(200).json({
       error: false,
@@ -142,12 +143,13 @@ const verifyPayment = async (req, res) => {
     });
   } catch (err) {
     console.error("Payment verification error:", err);
-    res.status(500).json({
+    return res.status(500).json({
       error: true,
       message: "Internal server error",
     });
   }
 };
+
 
 //
 

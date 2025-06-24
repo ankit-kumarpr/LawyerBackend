@@ -8,7 +8,7 @@ exports.generateTokens = (user) => {
   // console.log("payload is",payload);
 
   const accessToken = jwt.sign(payload, process.env.ACCESS_SECRET, {
-    expiresIn: '15m'
+    expiresIn: '1h'
   });
 
   const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET, {

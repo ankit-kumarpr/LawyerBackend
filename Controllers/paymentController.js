@@ -8,51 +8,62 @@ const User = require('../Models/User.Model');
 const Razorpay = require('razorpay');
 
 const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET
+  key_id: "rzp_test_mcwl3oaRQerrOW",  // wrap in quotes
+  key_secret: "N3hp4Pr3imA502zymNNyIYGI"
 });
 
 const createOrder = async (req, res) => {
   try {
-    const { lawyerId, mode } = req.body;
-    
+    const { lawyerId, mode, userId } = req.body;
+
+    console.log("Received Data:", { lawyerId, mode, userId });
+
     // Get lawyer details
-    const lawyer = await Lawyer.findOne({ lawyerId });
-    if (!lawyer) return res.status(404).json({ 
-        error: 'true',
-        message:"Lawyer not Found"
-     });
-    
+    const lawyer = await Lawyer.findOne({ lawyerId });  // Assuming lawyerId is a custom field
+
+    console.log("Lawyer Data:", lawyer);
+
+    if (!lawyer) {
+      return res.status(404).json({
+        error: true,
+        message: "Lawyer not Found"
+      });
+    }
+
+    // Create order on Razorpay
     const options = {
-      amount: lawyer.consultation_fees * 100,
+      amount: lawyer.consultation_fees * 100, // in paise
       currency: 'INR',
       receipt: `receipt_${Date.now()}`
     };
 
     const order = await razorpay.orders.create(options);
-    
-    // Create booking record
+
+    console.log("Razorpay Order:", order);
+
+    // Save booking to DB
     const booking = new Booking({
-      userId: req.user.userId,
+      userId,
       lawyerId,
       mode,
       amount: lawyer.consultation_fees,
-      paymentId: order.id
+      paymentId: order.id,
     });
 
     await booking.save();
 
-  return res.status(200).json({
+    return res.status(200).json({
       success: true,
       order,
-      booking,
-    //   bookingId: booking._id
+      booking
     });
+
   } catch (err) {
-    res.status(500).json({
-         error: true,
-         message:"Internal Server error"
-        });
+    console.error("Error in createOrder:", err.message);
+    return res.status(500).json({
+      error: true,
+      message: "Internal Server Error"
+    });
   }
 };
 

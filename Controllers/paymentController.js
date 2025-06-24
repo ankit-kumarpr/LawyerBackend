@@ -69,61 +69,72 @@ const createOrder = async (req, res) => {
 
 const verifyPayment = async (req, res) => {
   try {
-    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, bookingId } = req.body;
-    
-    // Verify signature
+    const {
+      razorpay_payment_id,
+      razorpay_order_id,
+      razorpay_signature,
+      bookingId,
+    } = req.body;
+
     const generated_signature = crypto
-      .createHmac('sha256', "N3hp4Pr3imA502zymNNyIYGI")
+      .createHmac("sha256", "N3hp4Pr3imA502zymNNyIYGI")
       .update(razorpay_order_id + "|" + razorpay_payment_id)
-      .digest('hex');
+      .digest("hex");
 
     if (generated_signature !== razorpay_signature) {
-      return res.status(400).json({ 
-        error:true,
-        message: 'Invalid signature'
-     });
+      return res.status(400).json({
+        error: true,
+        message: "Invalid signature",
+      });
     }
 
-    // Update booking status
+    // Step 1: Update booking
     const booking = await Booking.findByIdAndUpdate(
       bookingId,
       {
-        paymentStatus: 'success',
-        status: 'requested'
+        paymentStatus: "success",
+        status: "requested",
       },
       { new: true }
-    ).populate('lawyer', 'name email', { lawyerId: booking.lawyerId });
+    );
 
-    // Create transaction record
+    if (!booking) {
+      return res.status(404).json({ error: true, message: "Booking not found" });
+    }
+
+    // Step 2: Populate lawyer
+    const populatedBooking = await Booking.findById(booking._id).populate("lawyer", "name email");
+
+    // Step 3: Save transaction
     const transaction = new Transaction({
       userId: booking.userId,
       lawyerId: booking.lawyerId,
       amount: booking.amount,
       paymentId: razorpay_payment_id,
-      status: 'success'
+      status: "success",
     });
 
     await transaction.save();
 
-    // Emit real-time notification to lawyer
-    req.io.to(booking.lawyerId).emit('new-booking', {
-      booking,
-      user: req.user
+    // Step 4: Emit to lawyer
+    req.io.to(booking.lawyerId).emit("new-booking", {
+      booking: populatedBooking,
+      user: req.user,
     });
 
-   return res.status(200).json({
-error:false,
-     success: true, 
-     booking 
+    return res.status(200).json({
+      error: false,
+      success: true,
+      booking: populatedBooking,
     });
   } catch (err) {
-    res.status(500).json({ 
-        error: truea,
-        message:"Internal server error"
-     });
+    console.error("Payment verification error:", err);
+    res.status(500).json({
+      error: true,
+      message: "Internal server error",
+    });
   }
 };
-
 
 
 

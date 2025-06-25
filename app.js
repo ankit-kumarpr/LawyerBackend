@@ -1,21 +1,62 @@
+// const dotenv = require("dotenv");
+// dotenv.config();
+// const express = require("express");
+// const app = express();
+// const cors = require("cors");
+// const bodyParser = require('body-parser');
+// const connectToDb = require("./db/db");
+// const authRoutes = require("./Routes/auth.routes");
+// const CommonRoutes=require('./Routes/common.routes');
+
+// connectToDb();
+// app.use(cors());
+// app.use(express.json());
+// app.use(express.urlencoded({ extended: true }));
+// app.use(bodyParser.json());
+// app.use(bodyParser.urlencoded({ extended: true }));
+
+// app.use("/lawapi/auth", authRoutes);
+// app.use('/lawapi/common',CommonRoutes);
+
+// module.exports = app;
+
+
+
 const dotenv = require("dotenv");
 dotenv.config();
+
 const express = require("express");
 const app = express();
 const cors = require("cors");
-const bodyParser = require('body-parser');
+const bodyParser = require("body-parser");
 const connectToDb = require("./db/db");
+
+// Routes
 const authRoutes = require("./Routes/auth.routes");
-const CommonRoutes=require('./Routes/common.routes');
+const CommonRoutes = require("./Routes/common.routes");
 
 connectToDb();
+
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-app.use("/lawapi/auth", authRoutes);
-app.use('/lawapi/common',CommonRoutes);
+// Socket.IO setup middleware placeholder
+let io;
+const setSocketIO = (socketInstance) => {
+  io = socketInstance;
+};
 
-module.exports = app;
+app.use((req, res, next) => {
+  req.io = io;
+  next();
+});
+
+// API Routes
+app.use("/lawapi/auth", authRoutes);
+app.use("/lawapi/common", CommonRoutes);
+
+// Export app and io setter
+module.exports = { app, setSocketIO };

@@ -31,4 +31,7 @@ router.post("/updateuser/:userId", UpdateuserData);
 // order api
 router.post('/createorder',verifyToken,createOrder);
 router.post("/paymentverify", verifyToken, verifyPayment);
+
+router.get('/lawyerbooking',verifyToken, getLawyerBookings );
+
 module.exports = router;

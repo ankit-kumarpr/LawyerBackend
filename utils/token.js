@@ -1,19 +1,26 @@
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 
 exports.generateTokens = (user) => {
   const payload = {
-    id: user._id,
-    userId: user.userId,
-    role: user.role
+    id: user._id, // MongoDB ObjectId
+    role: user.role,
   };
-  // console.log("payload is",payload);
+
+
+  if (user.role === 'lawyer') {
+    payload.lawyerId = user.lawyerId;
+  } else if (user.role === 'user') {
+    payload.userId = user.userId;
+  }
+
+  console.log("Payload is:", payload);
 
   const accessToken = jwt.sign(payload, process.env.ACCESS_SECRET, {
-    expiresIn: '1h'
+    expiresIn: "1h",
   });
 
   const refreshToken = jwt.sign(payload, process.env.REFRESH_SECRET, {
-    expiresIn: '7d'
+    expiresIn: "7d",
   });
 
   return { accessToken, refreshToken };

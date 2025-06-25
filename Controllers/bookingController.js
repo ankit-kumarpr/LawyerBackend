@@ -24,26 +24,32 @@ const getBooking = async (req, res) => {
 const respondToBooking = async (req, res) => {
   try {
     const { status } = req.body;
+
     const booking = await Booking.findByIdAndUpdate(
       req.params.id,
       { status },
       { new: true }
     );
 
-    if (!booking) return res.status(404).json({ error: "Booking not found" });
+    if (!booking) {
+      return res.status(404).json({ error: "Booking not found" });
+    }
 
-    // Notify user
-    req.io.to(booking.userId).emit("booking-response", {
+    // Emit real-time response to the user
+    req.io.to(booking.userId.toString()).emit("booking-response", {
       bookingId: booking._id,
       status,
     });
 
-    res.json(booking);
+    return res.status(200).json({
+      error: false,
+      message: "Booking responded successfully",
+      booking,
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 };
-
 const getUserBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({ userId: req.user.userId }).sort({

@@ -504,7 +504,7 @@ io.on("connection", (socket) => {
     });
 
     console.log(
-      Session request sent from user ${userId} to lawyer ${lawyerId}
+     ` Session request sent from user ${userId} to lawyer ${lawyerId}`
     );
   });
 
@@ -569,7 +569,7 @@ io.on("connection", (socket) => {
 
   // Disconnect cleanup
   socket.on("disconnect", () => {
-    console.log(Client disconnected: ${socket.id});
+    console.log(`Client disconnected: ${socket.id}`);
 
     for (let [userId, socketId] of connectedUsers.entries()) {
       if (socketId === socket.id) {

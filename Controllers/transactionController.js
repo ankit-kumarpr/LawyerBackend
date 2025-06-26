@@ -50,7 +50,8 @@ const getLawyerBookingHistory = async (req, res) => {
           userId: user?.userId || 'Unknown',
           name: user?.name || 'Unknown',
           email: user?.email || '',
-          phone: user?.phone || ''
+          phone: user?.phone || '',
+          purpose: user?.purpose || ''
         },
         transaction: transaction
           ? {

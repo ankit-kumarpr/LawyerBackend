@@ -412,7 +412,7 @@ const connectedUsers = new Map();
 const connectedLawyers = new Map();
 
 io.on("connection", (socket) => {
-  console.log(New client connected: ${socket.id});
+  console.log(`New client connected: ${socket.id}`);
 
   // User joins
   socket.on("join-user", (userId) => {

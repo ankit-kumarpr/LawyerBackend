@@ -475,7 +475,7 @@ io.on("connection", (socket) => {
       });
 
       console.log(
-        Booking notification sent for booking ${bookingId} to lawyer ${lawyerId}
+       ` Booking notification sent for booking ${bookingId} to lawyer ${lawyerId}`
       );
     } catch (error) {
       console.error("Error handling booking notification:", error);

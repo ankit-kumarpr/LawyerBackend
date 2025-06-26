@@ -423,7 +423,7 @@ io.on("connection", (socket) => {
     console.log(`User ${userId} joined room`);
     socket.emit("joined-user-room", { userId });
   });
-console.log(`join lawyer lawyer id outside,${lawyerId}`);
+// console.log(`join lawyer lawyer id outside,${lawyerId}`);
   socket.on("join-lawyer", (lawyerId) => {
     console.log(`join lawyer lawyer id inside,${lawyerId}`);
     if (!lawyerId) return;

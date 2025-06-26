@@ -422,7 +422,7 @@ io.on("connection", (socket) => {
     }
     socket.join(userId);
     connectedUsers.set(userId, socket.id);
-    console.log(User ${userId} joined room);
+    console.log(`User ${userId} joined room`);
 
     socket.emit("joined-user-room", { userId });
   });
@@ -435,7 +435,7 @@ io.on("connection", (socket) => {
     }
     socket.join(lawyerId);
     connectedLawyers.set(lawyerId, socket.id);
-    console.log(Lawyer ${lawyerId} joined room);
+    console.log(`Lawyer ${lawyerId} joined room`);
 
     socket.emit("joined-lawyer-room", { lawyerId }); // ✅ confirmation
   });
@@ -447,7 +447,7 @@ io.on("connection", (socket) => {
       return;
     }
     socket.join(bookingId);
-    console.log(Client joined booking: ${bookingId});
+    console.log(`Client joined booking: ${bookingId}`);
   });
 
   // New booking notification
@@ -492,7 +492,7 @@ io.on("connection", (socket) => {
     }
 
     if (!connectedLawyers.has(lawyerId)) {
-      console.log(Lawyer ${lawyerId} is not currently connected);
+      console.log(`Lawyer ${lawyerId} is not currently connected`);
       // Optional: Queue notification logic here
     }
 
@@ -574,19 +574,19 @@ io.on("connection", (socket) => {
     for (let [userId, socketId] of connectedUsers.entries()) {
       if (socketId === socket.id) {
         connectedUsers.delete(userId);
-        console.log(User ${userId} disconnected);
+        console.log(`User ${userId} disconnected`);
       }
     }
 
     for (let [lawyerId, socketId] of connectedLawyers.entries()) {
       if (socketId === socket.id) {
         connectedLawyers.delete(lawyerId);
-        console.log(Lawyer ${lawyerId} disconnected);
+        console.log(`Lawyer ${lawyerId} disconnected`);
       }
     }
   });
 });
 
 server.listen(port, () => {
-  console.log(Server running on port ${port});
+  console.log(`Server running on port ${port}`);
 });

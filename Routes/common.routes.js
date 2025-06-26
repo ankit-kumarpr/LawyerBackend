@@ -9,7 +9,8 @@ const {completeBooking,
     respondToBooking,
     getBooking} = require('../Controllers/bookingController');
 const {getUserTransactions,
-    getLawyerTransactions} = require('../Controllers/transactionController');
+      getLawyerBookingHistory,
+} = require('../Controllers/transactionController');
 const {
   GetAllLawyersList,
   UpdateAnyLawyerData,
@@ -36,4 +37,8 @@ router.post("/paymentverify", verifyToken, verifyPayment);
 
 router.get('/lawyerbooking',verifyToken, getLawyerBookings );
 router.put("/bookings/:id", verifyToken, respondToBooking);
+
+
+// transection routes
+router.get("/lawyertransectionhistoty/:lawyerId", getLawyerBookingHistory);
 module.exports = router;

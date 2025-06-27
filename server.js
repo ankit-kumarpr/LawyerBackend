@@ -440,8 +440,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("new-booking-notification", (data) => {
+    console.log("Booking data",data);
     try {
-      const { lawyerId, bookingId, userId, mode, amount } = data;
+      const { lawyerId, bookingId, userId, mode, amount,name } = data;
       if (!lawyerId || !bookingId) return;
 
       if (!connectedLawyers.has(lawyerId)) {
@@ -455,6 +456,7 @@ io.on("connection", (socket) => {
         userId,
         mode,
         amount,
+        name,
         timestamp: new Date().toISOString(),
       });
 

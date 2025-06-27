@@ -4,24 +4,41 @@ const User = require("../Models/User.Model");
 const Booking = require("../Models/Booking");
 
 const getUserTransactions = async (req, res) => {
-  try {
-    const transactions = await Transaction.find({
-      userId: req.user.userId,
-    }).sort({ createdAt: -1 });
+  const { userId } = req.params;
 
-    const enrichedTransactions = await Promise.all(
-      transactions.map(async (t) => {
-        const lawyer = await Lawyer.findOne({ lawyerId: t.lawyerId });
+  try {
+    const bookings = await Booking.find({ userId }).sort({ createdAt: -1 });
+
+    const enriched = await Promise.all(
+      bookings.map(async (booking) => {
+        const lawyer = await Lawyer.findOne({ lawyerId: booking.lawyerId });
+
+        const transaction = await Transaction.findOne({
+          userId: booking.userId,
+          lawyerId: booking.lawyerId,
+          amount: booking.amount,
+        });
+
         return {
-          ...t._doc,
-          lawyer: { name: lawyer?.name || "Unknown", lawyerId: t.lawyerId },
+          ...booking._doc,
+          lawyer: lawyer
+            ? {
+                name: lawyer.name,
+                email: lawyer.email,
+                phone: lawyer.phone,
+                specialization: lawyer.specialization,
+                lawyerId: lawyer.lawyerId,
+              }
+            : null,
+          transaction: transaction || null,
         };
       })
     );
 
-    res.json(enrichedTransactions);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(200).json(enriched);
+  } catch (error) {
+    console.error("Error fetching user booking history:", error);
+    res.status(500).json({ error: error.message });
   }
 };
 

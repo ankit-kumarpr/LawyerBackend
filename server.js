@@ -439,7 +439,7 @@ io.on("connection", (socket) => {
     console.log(`Client joined booking: ${bookingId}`);
   });
 
-  socket.on("new-booking-notification", (data) => {
+socket.on("new-booking-notification", async (data) => {
     console.log("Booking data",data);
     try {
       const { lawyerId, bookingId, userId, mode, amount,name } = data;

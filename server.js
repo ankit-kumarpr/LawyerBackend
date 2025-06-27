@@ -390,79 +390,50 @@
 
 // ✅ SERVER (Socket.IO Backend with Enhanced Notifications)
 
-const http = require("http");
-const { app, setSocketIO } = require("./app");
-const port = process.env.PORT || 3000;
-const socketIo = require("socket.io");
-// const User = require('./Models/User.Model');
-const server = http.createServer(app);
-
-const io = socketIo(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST", "PUT", "DELETE"],
-    allowedHeaders: ["Authorization"],
-    credentials: true,
-  },
-  pingTimeout: 60000,
-  pingInterval: 25000,
-});
-
-setSocketIO(io);
-
-const connectedUsers = new Map();
-const connectedLawyers = new Map();
-
 io.on("connection", (socket) => {
-  console.log(`New client connected: ${socket.id}`);
+  console.log(`✅ New client connected: ${socket.id}`);
 
   socket.on("join-user", (userId) => {
     if (!userId) return;
     socket.join(userId);
     connectedUsers.set(userId, socket.id);
-    console.log(`User ${userId} joined room`);
+    console.log(`👤 User ${userId} joined room`);
     socket.emit("joined-user-room", { userId });
   });
-// console.log(`join lawyer lawyer id outside,${lawyerId}`);
+
   socket.on("join-lawyer", (lawyerId) => {
-    console.log(`join lawyer lawyer id inside,${lawyerId}`);
+    console.log(`🧑‍⚖ join lawyer lawyer id: ${lawyerId}`);
     if (!lawyerId) return;
     socket.join(lawyerId);
     connectedLawyers.set(lawyerId, socket.id);
-    console.log(`Lawyer ${lawyerId} joined room`);
+    console.log(`🧑‍⚖ Lawyer ${lawyerId} joined room`);
     socket.emit("joined-lawyer-room", { lawyerId });
   });
 
   socket.on("join-booking", (bookingId) => {
     if (!bookingId) return;
     socket.join(bookingId);
-    console.log(`Client joined booking: ${bookingId}`);
+    console.log(`📂 Client joined booking: ${bookingId}`);
   });
 
-socket.on("new-booking-notification",  (data) => {
-    console.log("Booking data",data);
+  socket.on("new-booking-notification", (data) => {
+    console.log("📦 Booking data", data);
     try {
       const { lawyerId, bookingId, userId, mode, amount } = data;
-      
-      if (!lawyerId || !bookingId) return;
-      
-// const user = await User.findOne({ _id: userId }).select("name");
-//     const userName = user ? user.name : "Unknown User";
 
-      
+      if (!lawyerId || !bookingId) return;
+
       if (!connectedLawyers.has(lawyerId)) {
         console.warn(`⚠ Lawyer ${lawyerId} is NOT connected`);
       } else {
-        console.log(`✅ Sending booking notification to lawyer ${lawyerId}`);
+        console.log(`📩 Sending booking notification to lawyer ${lawyerId}`);
       }
 
       io.to(lawyerId).emit("booking-notification", {
         bookingId,
         userId,
-         // name: userName,
         mode,
         amount,
-        
         timestamp: new Date().toISOString(),
       });
 
@@ -472,9 +443,9 @@ socket.on("new-booking-notification",  (data) => {
         userId,
       });
 
-      console.log(`Booking notification sent for booking ${bookingId} to lawyer ${lawyerId}`);
+      console.log(`📤 Booking notification sent for booking ${bookingId} to lawyer ${lawyerId}`);
     } catch (error) {
-      console.error("Error handling booking notification:", error);
+      console.error("❌ Error handling booking notification:", error);
     }
   });
 
@@ -490,11 +461,23 @@ socket.on("new-booking-notification",  (data) => {
       bookingId,
       userId,
       mode,
-      
       timestamp: new Date().toISOString(),
     });
 
-    console.log(`Session request sent from user ${userId} to lawyer ${lawyerId}`);
+    console.log(`📤 Session request sent from user ${userId} to lawyer ${lawyerId}`);
+  });
+
+  socket.on("booking-accepted", (data) => {
+    const { bookingId, lawyerId } = data;
+    if (!bookingId || !lawyerId) return;
+
+    io.to(bookingId).emit("booking-accepted", {
+      bookingId,
+      lawyerId,
+      timestamp: new Date().toISOString(),
+    });
+
+    console.log(`✅ Booking accepted event emitted for booking: ${bookingId}`);
   });
 
   socket.on("chat-message", (data) => {
@@ -541,24 +524,20 @@ socket.on("new-booking-notification",  (data) => {
   });
 
   socket.on("disconnect", () => {
-    console.log(`Client disconnected: ${socket.id}`);
+    console.log(`❎ Client disconnected: ${socket.id}`);
 
     for (let [userId, socketId] of connectedUsers.entries()) {
       if (socketId === socket.id) {
         connectedUsers.delete(userId);
-        console.log(`User ${userId} disconnected`);
+        console.log(`👤 User ${userId} disconnected`);
       }
     }
 
     for (let [lawyerId, socketId] of connectedLawyers.entries()) {
       if (socketId === socket.id) {
         connectedLawyers.delete(lawyerId);
-        console.log(`Lawyer ${lawyerId} disconnected`);
+        console.log(`🧑‍⚖ Lawyer ${lawyerId} disconnected`);
       }
     }
   });
-});
-
-server.listen(port, () => {
-  console.log(`Server running on port ${port}`);
 });

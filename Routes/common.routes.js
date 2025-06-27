@@ -41,4 +41,5 @@ router.put("/bookings/:id", verifyToken, respondToBooking);
 
 // transection routes
 router.get("/lawyertransectionhistoty/:lawyerId", getLawyerBookingHistory);
+router.get("/userhistory/:userId", getUserTransactions);
 module.exports = router;

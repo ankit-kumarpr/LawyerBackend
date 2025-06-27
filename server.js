@@ -484,6 +484,7 @@ io.on("connection", (socket) => {
       bookingId,
       userId,
       mode,
+      name,
       timestamp: new Date().toISOString(),
     });
 

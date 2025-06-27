@@ -392,8 +392,9 @@
 
 const http = require("http");
 const { app, setSocketIO } = require("./app");
-const port = process.env.PORT || 3000;
 const socketIo = require("socket.io");
+
+const port = process.env.PORT || 3000;
 const server = http.createServer(app);
 
 const io = socketIo(server, {
@@ -409,12 +410,19 @@ const io = socketIo(server, {
 
 setSocketIO(io);
 
+// Track connections
 const connectedUsers = new Map();
 const connectedLawyers = new Map();
 
 io.on("connection", (socket) => {
   console.log(`✅ New client connected: ${socket.id}`);
 
+  // Debug all events
+  socket.onAny((event, payload) => {
+    console.log(`📡 [SOCKET EVENT] ${event}:`, payload);
+  });
+
+  // Join rooms
   socket.on("join-user", (userId) => {
     if (!userId) return;
     socket.join(userId);
@@ -424,7 +432,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("join-lawyer", (lawyerId) => {
-    console.log(`🧑‍⚖ join lawyer lawyer id: ${lawyerId}`);
     if (!lawyerId) return;
     socket.join(lawyerId);
     connectedLawyers.set(lawyerId, socket.id);
@@ -438,46 +445,38 @@ io.on("connection", (socket) => {
     console.log(`📂 Client joined booking: ${bookingId}`);
   });
 
+  // Booking notification to lawyer
   socket.on("new-booking-notification", (data) => {
-    console.log("📦 Booking data", data);
-    try {
-      const { lawyerId, bookingId, userId, mode, amount } = data;
+    const { lawyerId, bookingId, userId, mode, amount } = data;
+    if (!lawyerId || !bookingId) return;
 
-      if (!lawyerId || !bookingId) return;
-
-      if (!connectedLawyers.has(lawyerId)) {
-        console.warn(`⚠ Lawyer ${lawyerId} is NOT connected`);
-      } else {
-        console.log(`📩 Sending booking notification to lawyer ${lawyerId}`);
-      }
-
-      io.to(lawyerId).emit("booking-notification", {
-        bookingId,
-        userId,
-        mode,
-        amount,
-        timestamp: new Date().toISOString(),
-      });
-
-      io.to(bookingId).emit("booking-update", {
-        status: "confirmed",
-        lawyerId,
-        userId,
-      });
-
-      console.log(`📤 Booking notification sent for booking ${bookingId} to lawyer ${lawyerId}`);
-    } catch (error) {
-      console.error("❌ Error handling booking notification:", error);
+    if (!connectedLawyers.has(lawyerId)) {
+      console.warn(`⚠ Lawyer ${lawyerId} is NOT connected`);
+    } else {
+      console.log(`📩 Sending booking notification to lawyer ${lawyerId}`);
     }
+
+    io.to(lawyerId).emit("booking-notification", {
+      bookingId,
+      userId,
+      mode,
+      amount,
+      timestamp: new Date().toISOString(),
+    });
+
+    io.to(bookingId).emit("booking-update", {
+      status: "confirmed",
+      lawyerId,
+      userId,
+    });
+
+    console.log(`📤 Booking notification sent for booking ${bookingId} to lawyer ${lawyerId}`);
   });
 
+  // Session request to lawyer
   socket.on("user-started-chat", (data) => {
     const { userId, lawyerId, bookingId, mode } = data;
     if (!userId || !lawyerId || !bookingId) return;
-
-    if (!connectedLawyers.has(lawyerId)) {
-      console.warn(`⚠ Lawyer ${lawyerId} is not currently connected`);
-    }
 
     io.to(lawyerId).emit("incoming-session-request", {
       bookingId,
@@ -489,21 +488,28 @@ io.on("connection", (socket) => {
     console.log(`📤 Session request sent from user ${userId} to lawyer ${lawyerId}`);
   });
 
+  // ✅ Lawyer accepts booking
   socket.on("booking-accepted", (data) => {
-    const { bookingId, lawyerId } = data;
-    if (!bookingId || !lawyerId) return;
+    const { bookingId, lawyerId, userId } = data;
+    if (!bookingId || !lawyerId || !userId) return;
 
-    io.to(bookingId).emit("booking-accepted", {
+    const response = {
       bookingId,
       lawyerId,
+      userId,
       timestamp: new Date().toISOString(),
-    });
+    };
+
+    io.to(bookingId).emit("booking-accepted", response);
+    io.to(userId).emit("booking-accepted", response); // 💡 also notify user directly
 
     console.log(`✅ Booking accepted event emitted for booking: ${bookingId}`);
   });
 
+  // Chat message relay
   socket.on("chat-message", (data) => {
-    if (!data.bookingId || !data.senderId || !data.message) return;
+    const { bookingId, senderId, message } = data;
+    if (!bookingId || !senderId || !message) return;
 
     const messageWithMeta = {
       ...data,
@@ -511,9 +517,10 @@ io.on("connection", (socket) => {
       status: "delivered",
     };
 
-    io.to(data.bookingId).emit("new-message", messageWithMeta);
+    io.to(bookingId).emit("new-message", messageWithMeta);
   });
 
+  // Call events
   socket.on("initiate-call", (data) => {
     if (!data.lawyerId || !data.bookingId) return;
 
@@ -535,6 +542,7 @@ io.on("connection", (socket) => {
     });
   });
 
+  // WebRTC signaling
   socket.on("webrtc-signal", (data) => {
     if (!data.target || !data.sender || !data.signal) return;
 
@@ -545,6 +553,7 @@ io.on("connection", (socket) => {
     });
   });
 
+  // Handle disconnect
   socket.on("disconnect", () => {
     console.log(`❎ Client disconnected: ${socket.id}`);
 

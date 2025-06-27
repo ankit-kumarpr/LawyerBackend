@@ -490,7 +490,7 @@ socket.on("new-booking-notification",  (data) => {
       bookingId,
       userId,
       mode,
-      name,
+      
       timestamp: new Date().toISOString(),
     });
 

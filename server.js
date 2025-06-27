@@ -394,7 +394,7 @@ const http = require("http");
 const { app, setSocketIO } = require("./app");
 const port = process.env.PORT || 3000;
 const socketIo = require("socket.io");
-const User = require('./Models/User.Model');
+// const User = require('./Models/User.Model');
 const server = http.createServer(app);
 
 const io = socketIo(server, {
@@ -439,15 +439,15 @@ io.on("connection", (socket) => {
     console.log(`Client joined booking: ${bookingId}`);
   });
 
-socket.on("new-booking-notification", async (data) => {
+socket.on("new-booking-notification",  (data) => {
     console.log("Booking data",data);
     try {
-      const { lawyerId, bookingId, userId, mode, amount,name } = data;
+      const { lawyerId, bookingId, userId, mode, amount } = data;
       
       if (!lawyerId || !bookingId) return;
       
-const user = await User.findOne({ _id: userId }).select("name");
-    const userName = user ? user.name : "Unknown User";
+// const user = await User.findOne({ _id: userId }).select("name");
+//     const userName = user ? user.name : "Unknown User";
 
       
       if (!connectedLawyers.has(lawyerId)) {
@@ -459,7 +459,7 @@ const user = await User.findOne({ _id: userId }).select("name");
       io.to(lawyerId).emit("booking-notification", {
         bookingId,
         userId,
-         name: userName,
+         // name: userName,
         mode,
         amount,
         

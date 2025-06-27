@@ -394,7 +394,7 @@ const http = require("http");
 const { app, setSocketIO } = require("./app");
 const port = process.env.PORT || 3000;
 const socketIo = require("socket.io");
-import User = require('../Models/User.Model.js');
+const User = require('../Models/User.Model.js');
 const server = http.createServer(app);
 
 const io = socketIo(server, {

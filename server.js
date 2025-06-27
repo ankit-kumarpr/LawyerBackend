@@ -456,7 +456,7 @@ io.on("connection", (socket) => {
         userId,
         mode,
         amount,
-        name,
+        
         timestamp: new Date().toISOString(),
       });
 

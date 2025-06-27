@@ -394,7 +394,7 @@ const http = require("http");
 const { app, setSocketIO } = require("./app");
 const port = process.env.PORT || 3000;
 const socketIo = require("socket.io");
-
+import User =require('../Models/User.Model.js');
 const server = http.createServer(app);
 
 const io = socketIo(server, {
@@ -443,8 +443,13 @@ io.on("connection", (socket) => {
     console.log("Booking data",data);
     try {
       const { lawyerId, bookingId, userId, mode, amount,name } = data;
+      
       if (!lawyerId || !bookingId) return;
+      
+const user = await User.findOne({ _id: userId }).select("name");
+    const userName = user ? user.name : "Unknown User";
 
+      
       if (!connectedLawyers.has(lawyerId)) {
         console.warn(`⚠ Lawyer ${lawyerId} is NOT connected`);
       } else {
@@ -454,6 +459,7 @@ io.on("connection", (socket) => {
       io.to(lawyerId).emit("booking-notification", {
         bookingId,
         userId,
+         name: userName,
         mode,
         amount,
         

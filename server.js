@@ -390,6 +390,28 @@
 
 // ✅ SERVER (Socket.IO Backend with Enhanced Notifications)
 
+const http = require("http");
+const { app, setSocketIO } = require("./app");
+const port = process.env.PORT || 3000;
+const socketIo = require("socket.io");
+const server = http.createServer(app);
+
+const io = socketIo(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Authorization"],
+    credentials: true,
+  },
+  pingTimeout: 60000,
+  pingInterval: 25000,
+});
+
+setSocketIO(io);
+
+const connectedUsers = new Map();
+const connectedLawyers = new Map();
+
 io.on("connection", (socket) => {
   console.log(`✅ New client connected: ${socket.id}`);
 
@@ -540,4 +562,8 @@ io.on("connection", (socket) => {
       }
     }
   });
+});
+
+server.listen(port, () => {
+  console.log(`🚀 Server running on port ${port}`);
 });

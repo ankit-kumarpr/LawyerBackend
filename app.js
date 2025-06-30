@@ -42,7 +42,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Socket.IO setup middleware placeholder
 let io;
 const setSocketIO = (socketInstance) => {

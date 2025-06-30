@@ -26,11 +26,15 @@ const LawyerSchema = new mongoose.Schema({
     type:String,
     required:true
   },
-  password: {
+    experience:{
+        type:Number,
+        default:0
+    },  password: {
     type: String,
     required: true,
     minlegth: 8,
   },
+  
  licenseNumber: {
   type: String,
   required: true,
@@ -42,6 +46,21 @@ const LawyerSchema = new mongoose.Schema({
     type:Boolean,
     default:false,
   },
+  status:{
+    type:String,
+    enum:["online","offline","Busy"],
+    default:"offline"
+  },
+  consultation_fees:{
+    type:Number,
+    default:0
+  },
+  role: {
+  type: String,
+  enum: ['lawyer'],
+  default: 'lawyer',
+  required: true
+},
   created_at:{
     type:Date,
     default:Date.now()

@@ -15,7 +15,10 @@ const UserSchema=new mongoose.Schema({
     },
     password:{
         type:String,
+         required:true,
+    minlength:8
     },
+    
     phone:{
         type:Number,
         minlength:10,
@@ -32,10 +35,17 @@ const UserSchema=new mongoose.Schema({
     purpose:{
         type:String
     },
+    role: {
+  type: String,
+  enum: ['user'],
+  default: 'user',
+  required: true
+},
     created_at:{
         type:Date,
         default:Date.now()
-    }
+    },
+    
     
 
 })

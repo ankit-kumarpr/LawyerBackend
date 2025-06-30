@@ -1,8 +1,15 @@
 const express = require("express");
 const router = express.Router();
 const { verifyToken, restrictTo } = require("../middleware/auth");
+const upload = require("../middleware/upload");
 const { createOrder,
     verifyPayment} = require('../Controllers/paymentController');
+const {
+  sendMessage,
+  getChatList,
+  getChatHistory,
+  markAsRead,
+} = require("../Controllers/messageController");
 const {completeBooking,
     getLawyerBookings,
     getUserBookings,
@@ -33,7 +40,11 @@ router.post("/updateuser/:userId", UpdateuserData);
 router.post('/createorder',verifyToken,createOrder);
 router.post("/paymentverify", verifyToken, verifyPayment);
 
-
+// chat router
+router.post("/sendmessage", verifyToken, upload.array("files", 10), sendMessage);
+router.get("/gethistory/:bookingId", verifyToken, getChatHistory);
+router.get("/chatlist/chats", verifyToken, getChatList);
+router.put("read/:bookingId/read", verifyToken, markAsRead);
 
 router.get('/lawyerbooking',verifyToken, getLawyerBookings );
 router.put("/bookings/:id", verifyToken, respondToBooking);

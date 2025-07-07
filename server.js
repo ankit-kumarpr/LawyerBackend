@@ -16,7 +16,23 @@ const io = socketIo(server, {
   pingInterval: 25000,
 });
 
+// ✅ Set IO reference in app
 setSocketIO(io);
+
+// ✅ Authentication middleware — handles token passed from frontend
+io.use((socket, next) => {
+  const token = socket.handshake.auth?.token;
+  if (!token) {
+    console.warn("❌ Missing authentication token");
+    return next(new Error("Missing authentication data"));
+  }
+
+  // OPTIONAL: Validate token here using JWT
+  // const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  // socket.user = decoded;
+
+  next(); // ✅ Allow connection
+});
 
 // Track connections
 const connectedUsers = new Map();
@@ -30,7 +46,7 @@ io.on("connection", (socket) => {
     console.log(`📡 [SOCKET EVENT] ${event}:`, payload);
   });
 
-  // Join rooms
+  // Join user room
   socket.on("join-user", (userId) => {
     if (!userId) return;
     socket.join(userId);
@@ -39,6 +55,7 @@ io.on("connection", (socket) => {
     socket.emit("joined-user-room", { userId });
   });
 
+  // Join lawyer room
   socket.on("join-lawyer", (lawyerId) => {
     if (!lawyerId) return;
     socket.join(lawyerId);
@@ -81,7 +98,7 @@ io.on("connection", (socket) => {
     console.log(`📤 Booking notification sent for booking ${bookingId} to lawyer ${lawyerId}`);
   });
 
-  // Session request to lawyer
+  // User starts session
   socket.on("user-started-chat", (data) => {
     const { userId, lawyerId, bookingId, mode } = data;
     if (!userId || !lawyerId || !bookingId) return;
@@ -96,7 +113,7 @@ io.on("connection", (socket) => {
     console.log(`📤 Session request sent from user ${userId} to lawyer ${lawyerId}`);
   });
 
-  // ✅ Lawyer accepts booking
+  // Lawyer accepts booking
   socket.on("booking-accepted", (data) => {
     const { bookingId, lawyerId, userId } = data;
     if (!bookingId || !lawyerId || !userId) return;
@@ -113,17 +130,17 @@ io.on("connection", (socket) => {
 
     console.log(`✅ Booking accepted event emitted for booking: ${bookingId}`);
 
-    // ✅ Emit session-started immediately after acceptance
+    // Start session
     io.to(bookingId).emit("session-started", {
       bookingId,
-      duration: 900, // 15 minutes = 900 seconds
+      duration: 900, // 15 minutes
       startedAt: new Date().toISOString()
     });
 
     console.log(`🚀 session-started emitted to room: ${bookingId}`);
   });
 
-  // Chat message relay
+  // Chat message
   socket.on("chat-message", (data) => {
     const { bookingId, senderId, message } = data;
     if (!bookingId || !senderId || !message) return;
@@ -170,7 +187,7 @@ io.on("connection", (socket) => {
     });
   });
 
-  // Handle disconnect
+  // Disconnect
   socket.on("disconnect", () => {
     console.log(`❎ Client disconnected: ${socket.id}`);
 
@@ -190,6 +207,7 @@ io.on("connection", (socket) => {
   });
 });
 
+// Start server
 server.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
 });

@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { verifyToken, restrictTo } = require("../middleware/auth");
 const upload = require("../middleware/upload");
+const lawyerUpload = require("../middleware/lawyerUpload");
 const { createOrder,
     verifyPayment} = require('../Controllers/paymentController');
 const {
@@ -32,7 +33,7 @@ const {SendRequest,GetlawyerRequests,UserRequest}=require('../Controllers/lawyer
 
 
 router.get("/lwayerlist", GetAllLawyersList);
-router.post("/updatelawyer/:lawyerId", UpdateAnyLawyerData);
+router.post("/updatelawyer/:lawyerId", lawyerUpload.single("lawyerImage"), UpdateAnyLawyerData););
 router.post("/dellawyer/:lawyerId", DeleteAnyLawyer); //admin only
 router.put("/activelawyer/:lawyerId", ActiveAnyLawyer); //admin only
 

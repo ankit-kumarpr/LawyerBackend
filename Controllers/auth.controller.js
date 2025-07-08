@@ -237,8 +237,25 @@ const UpdateAnyLawyerData = async (req, res) => {
       });
     }
 
+    // Add lawyerImage path if file uploaded
+    if (req.file) {
+      updateData.lawyerImage = `/uploads/lawyers/${req.file.filename}`;
+    }
+
+    // Parse education array if sent as stringified JSON
+    if (updateData.education && typeof updateData.education === "string") {
+      try {
+        updateData.education = JSON.parse(updateData.education);
+      } catch (e) {
+        return res.status(400).json({
+          error: true,
+          message: "Invalid format for education (should be JSON array)",
+        });
+      }
+    }
+
     const updatedLawyer = await Lawyer.findOneAndUpdate(
-      { lawyerId: lawyerId },
+      { lawyerId },
       updateData,
       { new: true }
     );

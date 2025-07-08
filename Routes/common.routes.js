@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const { verifyToken, restrictTo } = require("../middleware/auth");
 const upload = require("../middleware/upload");
+const lawyerUpload = require("../middleware/lawyerUpload");
 const { createOrder,
     verifyPayment} = require('../Controllers/paymentController');
 const {
@@ -27,8 +28,12 @@ const {
   UpdateuserData,
 } = require("../Controllers/auth.controller");
 
+const {SendRequest,GetlawyerRequests,UserRequest}=require('../Controllers/lawyerrequest.controller');
+
+
+
 router.get("/lwayerlist", GetAllLawyersList);
-router.post("/updatelawyer/:lawyerId", UpdateAnyLawyerData);
+router.post("/updatelawyer/:lawyerId", lawyerUpload.single("lawyerImage"), UpdateAnyLawyerData););
 router.post("/dellawyer/:lawyerId", DeleteAnyLawyer); //admin only
 router.put("/activelawyer/:lawyerId", ActiveAnyLawyer); //admin only
 
@@ -53,4 +58,11 @@ router.put("/bookings/:id", verifyToken, respondToBooking);
 // transection routes
 router.get("/lawyertransectionhistoty/:lawyerId", getLawyerBookingHistory);
 router.get("/userhistory/:userId", getUserTransactions);
+// lawyer request if lawyer offline
+
+router.post('/sendlawyerrequest',SendRequest);
+router.get('/lawyerrequest/:lawyerId',GetlawyerRequests);
+router.get('/userrequest/:userId',UserRequest);
+
+
 module.exports = router;

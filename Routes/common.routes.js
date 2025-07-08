@@ -33,7 +33,7 @@ const {SendRequest,GetlawyerRequests,UserRequest}=require('../Controllers/lawyer
 
 
 router.get("/lwayerlist", GetAllLawyersList);
-router.post("/updatelawyer/:lawyerId", lawyerUpload.single("lawyerImage"), UpdateAnyLawyerData););
+router.post("/updatelawyer/:lawyerId", lawyerUpload.single("lawyerImage"), UpdateAnyLawyerData);
 router.post("/dellawyer/:lawyerId", DeleteAnyLawyer); //admin only
 router.put("/activelawyer/:lawyerId", ActiveAnyLawyer); //admin only
 

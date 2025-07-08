@@ -61,6 +61,22 @@ const LawyerSchema = new mongoose.Schema({
   default: 'lawyer',
   required: true
 },
+    lawyerImage: {
+    type: String, 
+    default: ""
+  },
+  profileDescription: {
+    type: String,
+    default: ""
+  },
+  education: {
+    type: [String], 
+    default: []
+  },
+  practiceArea: {
+    type: String,
+    default: ""
+  },
   created_at:{
     type:Date,
     default:Date.now()

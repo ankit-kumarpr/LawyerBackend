@@ -21,6 +21,10 @@ const fileFilter = (req, file, cb) => {
   }
 };
 
-const lawyerUpload = multer({ storage: lawyerStorage, fileFilter });
+const lawyerUpload = multer({ 
+  storage: lawyerStorage,
+  fileFilter,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10 MB in bytes
+});
 
 module.exports = lawyerUpload;

@@ -3,7 +3,7 @@ const path = require("path");
 
 const lawyerStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/`lawyers`/"); // Make sure this folder exists
+    cb(null, "uploads/lawyers/"); // Make sure this folder exists
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);

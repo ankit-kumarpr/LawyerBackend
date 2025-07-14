@@ -210,8 +210,6 @@
 // });
 
 
-
-
 const http = require("http");
 const { app, setSocketIO } = require("./app");
 const socketIo = require("socket.io");
@@ -256,7 +254,6 @@ io.on("connection", (socket) => {
   });
 
   // === JOIN ROOMS ===
-
   socket.on("join-user", (userId) => {
     if (!userId) return;
     socket.join(userId);
@@ -275,7 +272,6 @@ io.on("connection", (socket) => {
 
   socket.on("join-booking", (bookingId) => {
     if (!bookingId) return;
-
     const roomName = `booking-${bookingId}`;
     socket.join(roomName);
     console.log(`📂 Joined booking room: ${roomName}`);
@@ -288,7 +284,6 @@ io.on("connection", (socket) => {
   });
 
   // === BOOKING FLOW ===
-
   socket.on("new-booking-notification", ({ lawyerId, bookingId, userId, mode, amount }) => {
     if (!lawyerId || !bookingId) return;
 
@@ -341,10 +336,9 @@ io.on("connection", (socket) => {
   });
 
   // === CHAT MESSAGES ===
-
   socket.on("chat-message", (data) => {
-    const { bookingId, senderId, message } = data;
-    if (!bookingId || !senderId || !message) return;
+    const { bookingId, senderId, content } = data;
+    if (!bookingId || !senderId || !content) return;
 
     const roomName = `booking-${bookingId}`;
     const msg = {
@@ -353,11 +347,11 @@ io.on("connection", (socket) => {
       status: "delivered",
     };
 
+    console.log(`💬 chat-message to ${roomName}:`, msg);
     io.to(roomName).emit("new-message", msg);
   });
 
   // === SESSION END ===
-
   socket.on("end-session", ({ bookingId }) => {
     if (!bookingId) return;
 
@@ -369,7 +363,6 @@ io.on("connection", (socket) => {
   });
 
   // === CALLS ===
-
   socket.on("initiate-call", ({ lawyerId, bookingId, mode, user }) => {
     if (!lawyerId || !bookingId) return;
 
@@ -393,7 +386,6 @@ io.on("connection", (socket) => {
   });
 
   // === WebRTC Signal ===
-
   socket.on("webrtc-signal", ({ target, sender, signal }) => {
     if (!target || !sender || !signal) return;
 
@@ -405,7 +397,6 @@ io.on("connection", (socket) => {
   });
 
   // === DISCONNECT ===
-
   socket.on("disconnect", () => {
     console.log(`❎ Client disconnected: ${socket.id}`);
 
@@ -429,4 +420,3 @@ io.on("connection", (socket) => {
 server.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
 });
-

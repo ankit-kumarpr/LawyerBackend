@@ -24,17 +24,17 @@ const UserSchema=new mongoose.Schema({
         minlength:10,
         maxlength:10
     },
-    addressline:{
-        type:String,
+    // addressline:{
+    //     type:String,
 
-    },
-    city:{
-        type:String,
-        required:true
-    },
-    purpose:{
-        type:String
-    },
+    // },
+    // city:{
+    //     type:String,
+    //     required:true
+    // },
+    // purpose:{
+    //     type:String
+    // },
     role: {
   type: String,
   enum: ['user'],

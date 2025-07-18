@@ -60,7 +60,7 @@ app.use((req, res, next) => {
 // API Routes
 app.use("/lawapi/auth", authRoutes);
 app.use("/lawapi/common", CommonRoutes);
-app.use('/uploadsphy', express.static(path.join(__dirname, 'uploadsphy')));
+app.use('/lawapi/physical-lawyers', lawyerRoutes);
 
 // Export app and io setter
 module.exports = { app, setSocketIO };

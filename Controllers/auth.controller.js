@@ -89,14 +89,14 @@ const Register = async (req, res) => {
     }
 
     // User-specific fields
-    if (role === "user") {
-      if (!city) {
-        return res.status(400).json({ message: "City is required for user" });
-      }
-      newUserData.city = city;
-      newUserData.addressline = addressline;
-      newUserData.purpose = purpose;
-    }
+    // if (role === "user") {
+    //   if (!city) {
+    //     return res.status(400).json({ message: "City is required for user" });
+    //   }
+    //   newUserData.city = city;
+    //   newUserData.addressline = addressline;
+    //   newUserData.purpose = purpose;
+    // }
 
     const newUser = await Model.create(newUserData);
 

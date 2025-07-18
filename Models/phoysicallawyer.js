@@ -9,6 +9,7 @@ const PhysicalLawyerSchema = new mongoose.Schema({
   licenseNumber: String,
   specialization: String,
   consultation_fees: Number,
+  education:String,
   experience: Number,
   practiceArea: String,
   profileDescription: String,

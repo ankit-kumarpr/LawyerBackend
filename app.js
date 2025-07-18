@@ -35,6 +35,7 @@ const connectToDb = require("./db/db");
 // Routes
 const authRoutes = require("./Routes/auth.routes");
 const CommonRoutes = require("./Routes/common.routes");
+const lawyerRoutes = require('./Routes/physicalLawyer.Routes');
 
 connectToDb();
 
@@ -44,6 +45,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use('/uploadsphy', express.static(path.join(__dirname, 'uploadsphy')));
 // Socket.IO setup middleware placeholder
 let io;
 const setSocketIO = (socketInstance) => {

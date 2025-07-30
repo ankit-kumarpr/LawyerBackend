@@ -13,7 +13,7 @@ const BookingSchema = new mongoose.Schema({
   },
   mode: {
     type: String,
-    enum: ['chat', 'voice', 'video'],
+    enum: ['chat', 'call', 'video'],
     required: true
   },
   amount: {

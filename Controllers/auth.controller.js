@@ -76,7 +76,7 @@ const Register = async (req, res) => {
 
     // Lawyer-specific fields
     if (role === "lawyer") {
-      if (!experience || !licenseNumber || !specialization || !city) {
+      if (!experience || !licenseNumber || !specialization || ) {
         return res.status(400).json({
           message:
             "Missing required fields for lawyer (experience, licenseNumber, specialization, city)",

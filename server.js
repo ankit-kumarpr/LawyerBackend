@@ -222,7 +222,7 @@ const io = socketIo(server, {
     origin: "https://law-consultancy-firms-git-low3-ashish8.vercel.app",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Authorization"],
-    credentials: false,
+    credentials: true,
   },
   pingTimeout: 120000,
   pingInterval: 30000,

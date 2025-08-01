@@ -85,7 +85,7 @@ const Register = async (req, res) => {
       newUserData.experience = experience;
       newUserData.licenseNumber = licenseNumber;
       newUserData.specialization = specialization;
-      newUserData.city = city;
+      // newUserData.city = city;
     }
 
     // User-specific fields

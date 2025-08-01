@@ -222,7 +222,7 @@ const io = socketIo(server, {
     origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Authorization"],
-    credentials: true,
+    credentials: false,
   },
   pingTimeout: 120000,
   pingInterval: 30000,

@@ -19,13 +19,13 @@ const LawyerSchema = new mongoose.Schema({
     minlegth:10,
     maxlength:10
   },
-  addressline:{
-    type:String,
-  },
-  city:{
-    type:String,
-    required:true
-  },
+  // addressline:{
+  //   type:String,
+  // },
+  // city:{
+  //   type:String,
+  //   required:true
+  // },
     experience:{
         type:Number,
         default:0

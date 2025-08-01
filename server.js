@@ -219,7 +219,7 @@ const server = http.createServer(app);
 
 const io = socketIo(server, {
   cors: {
-    origin: "https://law-consultancy-firms-git-low3-ashish8.vercel.app",
+    origin: "*",
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Authorization"],
     credentials: true,

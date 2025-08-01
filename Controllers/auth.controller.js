@@ -43,9 +43,9 @@ const Register = async (req, res) => {
     experience,
     licenseNumber,
     specialization,
-    city,
-    addressline,
-    purpose,
+    // city,
+    // addressline,
+    // purpose,
   } = req.body;
 
   try {

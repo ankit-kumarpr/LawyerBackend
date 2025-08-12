@@ -208,7 +208,221 @@
 // server.listen(port, () => {
 //   console.log(`🚀 Server running on port ${port}`);
 // });
+// ***************************************************************************************
 
+// const http = require("http");
+// const { app, setSocketIO } = require("./app");
+// const socketIo = require("socket.io");
+
+// const port = process.env.PORT || 3000;
+// const server = http.createServer(app);
+
+// const io = socketIo(server, {
+//   cors: {
+//     origin: "*",
+//     methods: ["GET", "POST", "PUT", "DELETE"],
+//     allowedHeaders: ["Authorization"],
+//     credentials: true,
+//   },
+//   pingTimeout: 120000,
+//   pingInterval: 30000,
+// });
+
+// setSocketIO(io);
+
+// // === AUTH MIDDLEWARE ===
+// io.use((socket, next) => {
+//   const token = socket.handshake.auth?.token;
+//   if (!token) {
+//     console.warn("❌ Missing authentication token");
+//     return next(new Error("Missing authentication"));
+//   }
+//   next();
+// });
+
+// // === In-memory session maps ===
+// const connectedUsers = new Map();
+// const connectedLawyers = new Map();
+// const activeSessions = new Map(); // bookingId => sessionData
+
+// // === MAIN SOCKET LOGIC ===
+// io.on("connection", (socket) => {
+//   console.log(`✅ New client connected: ${socket.id}`);
+
+//   socket.onAny((event, payload) => {
+//     console.log(`📡 [EVENT] ${event}:`, payload);
+//   });
+
+//   // === JOIN ROOMS ===
+//   socket.on("join-user", (userId) => {
+//     if (!userId) return;
+//     socket.join(userId);
+//     connectedUsers.set(userId, socket.id);
+//     socket.emit("joined-user-room", { userId });
+//     console.log(`👤 User ${userId} joined`);
+//   });
+
+//   socket.on("join-lawyer", (lawyerId) => {
+//     if (!lawyerId) return;
+//     socket.join(lawyerId);
+//     connectedLawyers.set(lawyerId, socket.id);
+//     socket.emit("joined-lawyer-room", { lawyerId });
+//     console.log(`🧑‍⚖ Lawyer ${lawyerId} joined`);
+//   });
+
+//   socket.on("join-booking", (bookingId) => {
+//     if (!bookingId) return;
+//     const roomName = `booking-${bookingId}`;
+//     socket.join(roomName);
+//     console.log(`📂 Joined booking room: ${roomName}`);
+
+//     if (activeSessions.has(bookingId)) {
+//       const sessionData = activeSessions.get(bookingId);
+//       socket.emit("session-started", sessionData);
+//       console.log(`🔁 Re-sent session-started for room: ${roomName}`);
+//     }
+//   });
+
+//   // === BOOKING FLOW ===
+//   socket.on("new-booking-notification", ({ lawyerId, bookingId, userId, mode, amount }) => {
+//     if (!lawyerId || !bookingId) return;
+
+//     io.to(lawyerId).emit("booking-notification", {
+//       bookingId,
+//       userId,
+//       mode,
+//       amount,
+//       timestamp: new Date().toISOString(),
+//     });
+
+//     io.to(`booking-${bookingId}`).emit("booking-update", {
+//       status: "confirmed",
+//       lawyerId,
+//       userId,
+//     });
+
+//     console.log(`📤 Booking ${bookingId} notified to lawyer ${lawyerId}`);
+//   });
+
+//   socket.on("user-started-chat", ({ userId, lawyerId, bookingId, mode }) => {
+//     if (!userId || !lawyerId || !bookingId) return;
+
+//     io.to(lawyerId).emit("incoming-session-request", {
+//       bookingId,
+//       userId,
+//       mode,
+//       timestamp: new Date().toISOString(),
+//     });
+
+//     console.log(`📤 Session request from user ${userId} to lawyer ${lawyerId}`);
+//   });
+
+//   socket.on("booking-accepted", ({ bookingId, lawyerId, userId }) => {
+//     if (!bookingId || !lawyerId || !userId) return;
+
+//     const sessionData = {
+//       bookingId,
+//       duration: 900, // 15 minutes
+//       startedAt: new Date().toISOString(),
+//     };
+
+//     activeSessions.set(bookingId, sessionData);
+
+//     const roomName = `booking-${bookingId}`;
+//     io.to(roomName).emit("session-started", sessionData);
+//     io.to(userId).emit("booking-accepted", { bookingId, lawyerId, userId });
+
+//     console.log(`🚀 session-started emitted for room: ${roomName}`);
+//   });
+
+//   // === CHAT MESSAGES ===
+//   socket.on("chat-message", (data) => {
+//     const { bookingId, senderId, content } = data;
+//     if (!bookingId || !senderId || !content) return;
+
+//     const roomName = `booking-${bookingId}`;
+//     const msg = {
+//       ...data,
+//       timestamp: new Date().toISOString(),
+//       status: "delivered",
+//     };
+
+//     console.log(`💬 chat-message to ${roomName}:`, msg);
+//     io.to(roomName).emit("new-message", msg);
+//   });
+
+//   // === SESSION END ===
+//   socket.on("end-session", ({ bookingId }) => {
+//     if (!bookingId) return;
+
+//     const roomName = `booking-${bookingId}`;
+//     io.to(roomName).emit("session-ended", { bookingId });
+//     activeSessions.delete(bookingId);
+
+//     console.log(`🛑 session-ended emitted for room: ${roomName}`);
+//   });
+
+//   // === CALLS ===
+//   socket.on("initiate-call", ({ lawyerId, bookingId, mode, user }) => {
+//     if (!lawyerId || !bookingId) return;
+
+//     io.to(lawyerId).emit("incoming-call", {
+//       bookingId,
+//       mode,
+//       user,
+//       timestamp: new Date().toISOString(),
+//     });
+//   });
+
+//   socket.on("call-response", ({ bookingId, status, lawyerId }) => {
+//     if (!bookingId || !status) return;
+
+//     const roomName = `booking-${bookingId}`;
+//     io.to(roomName).emit("call-status", {
+//       status,
+//       lawyerId,
+//       timestamp: new Date().toISOString(),
+//     });
+//   });
+
+//   // === WebRTC Signal ===
+//   socket.on("webrtc-signal", ({ target, sender, signal }) => {
+//     if (!target || !sender || !signal) return;
+
+//     socket.to(target).emit("webrtc-signal", {
+//       sender,
+//       signal,
+//       timestamp: new Date().toISOString(),
+//     });
+//   });
+
+//   // === DISCONNECT ===
+//   socket.on("disconnect", () => {
+//     console.log(`❎ Client disconnected: ${socket.id}`);
+
+//     for (const [userId, sockId] of connectedUsers) {
+//       if (sockId === socket.id) {
+//         connectedUsers.delete(userId);
+//         console.log(`👤 User ${userId} disconnected`);
+//       }
+//     }
+
+//     for (const [lawyerId, sockId] of connectedLawyers) {
+//       if (sockId === socket.id) {
+//         connectedLawyers.delete(lawyerId);
+//         console.log(`🧑‍⚖ Lawyer ${lawyerId} disconnected`);
+//       }
+//     }
+//   });
+// });
+
+// // === START SERVER ===
+// server.listen(port, () => {
+//   console.log(`🚀 Server running on port ${port}`);
+// });
+
+
+// *************************************************
 
 const http = require("http");
 const { app, setSocketIO } = require("./app");
@@ -245,9 +459,10 @@ const connectedUsers = new Map();
 const connectedLawyers = new Map();
 const activeSessions = new Map(); // bookingId => sessionData
 
-// === MAIN SOCKET LOGIC ===
 io.on("connection", (socket) => {
   console.log(`✅ New client connected: ${socket.id}`);
+
+  socket.userData = { userId: null, userType: null, bookingRooms: [] };
 
   socket.onAny((event, payload) => {
     console.log(`📡 [EVENT] ${event}:`, payload);
@@ -257,6 +472,7 @@ io.on("connection", (socket) => {
   socket.on("join-user", (userId) => {
     if (!userId) return;
     socket.join(userId);
+    socket.userData.userId = userId;
     connectedUsers.set(userId, socket.id);
     socket.emit("joined-user-room", { userId });
     console.log(`👤 User ${userId} joined`);
@@ -265,6 +481,7 @@ io.on("connection", (socket) => {
   socket.on("join-lawyer", (lawyerId) => {
     if (!lawyerId) return;
     socket.join(lawyerId);
+    socket.userData.userId = lawyerId;
     connectedLawyers.set(lawyerId, socket.id);
     socket.emit("joined-lawyer-room", { lawyerId });
     console.log(`🧑‍⚖ Lawyer ${lawyerId} joined`);
@@ -274,12 +491,14 @@ io.on("connection", (socket) => {
     if (!bookingId) return;
     const roomName = `booking-${bookingId}`;
     socket.join(roomName);
+    socket.userData.bookingRooms.push(roomName);
     console.log(`📂 Joined booking room: ${roomName}`);
 
+    // If the session is already active, send it immediately
     if (activeSessions.has(bookingId)) {
       const sessionData = activeSessions.get(bookingId);
       socket.emit("session-started", sessionData);
-      console.log(`🔁 Re-sent session-started for room: ${roomName}`);
+      console.log(`🔁 Sent session-started to ${socket.id} for booking ${bookingId}`);
     }
   });
 
@@ -302,19 +521,6 @@ io.on("connection", (socket) => {
     });
 
     console.log(`📤 Booking ${bookingId} notified to lawyer ${lawyerId}`);
-  });
-
-  socket.on("user-started-chat", ({ userId, lawyerId, bookingId, mode }) => {
-    if (!userId || !lawyerId || !bookingId) return;
-
-    io.to(lawyerId).emit("incoming-session-request", {
-      bookingId,
-      userId,
-      mode,
-      timestamp: new Date().toISOString(),
-    });
-
-    console.log(`📤 Session request from user ${userId} to lawyer ${lawyerId}`);
   });
 
   socket.on("booking-accepted", ({ bookingId, lawyerId, userId }) => {
@@ -416,7 +622,7 @@ io.on("connection", (socket) => {
   });
 });
 
-// === START SERVER ===
 server.listen(port, () => {
   console.log(`🚀 Server running on port ${port}`);
 });
+

@@ -670,12 +670,12 @@ const connectedUsers = new Map();
 const connectedLawyers = new Map();
 
 io.on("connection", (socket) => {
-  console.log(✅ New client connected: ${socket.id});
+  console.log(`✅ New client connected: ${socket.id}`);
 
   socket.userData = { userId: null, userType: null, bookingRooms: [] };
 
   socket.onAny((event, payload) => {
-    console.log(📡 [EVENT] ${event}:, payload);
+    console.log(`📡 [EVENT] ${event}:`, payload);
   });
 
   // === JOIN ROOMS ===
@@ -685,7 +685,7 @@ io.on("connection", (socket) => {
     socket.userData.userId = userId;
     connectedUsers.set(userId, socket.id);
     socket.emit("joined-user-room", { userId });
-    console.log(👤 User ${userId} joined);
+    console.log(`👤 User ${userId} joined`);
   });
 
   socket.on("join-lawyer", (lawyerId) => {
@@ -694,26 +694,26 @@ io.on("connection", (socket) => {
     socket.userData.userId = lawyerId;
     connectedLawyers.set(lawyerId, socket.id);
     socket.emit("joined-lawyer-room", { lawyerId });
-    console.log(🧑‍⚖ Lawyer ${lawyerId} joined);
+    console.log(`🧑‍⚖ Lawyer ${lawyerId} joined`);
   });
 
   socket.on("join-booking", async (bookingId) => {
     if (!bookingId) return;
-    const roomName = booking-${bookingId};
+    const roomName = `booking-${bookingId}`;
     socket.join(roomName);
     socket.userData.bookingRooms.push(roomName);
-    console.log(📂 Joined booking room: ${roomName});
+    console.log(`📂 Joined booking room: ${roomName}`);
 
     // Fetch session data from Redis and send if exists
     try {
-      const sessionDataStr = await redis.get(session:${bookingId});
+      const sessionDataStr = await redis.get(`session:${bookingId}`);
       if (sessionDataStr) {
         const sessionData = JSON.parse(sessionDataStr);
         socket.emit("session-started", sessionData);
-        console.log(🔁 Sent session-started to ${socket.id} for booking ${bookingId});
+        console.log(`🔁 Sent session-started to ${socket.id} for booking ${bookingId}`);
       }
     } catch (err) {
-      console.error(❌ Redis error on join-booking for ${bookingId}:, err);
+      console.error(`❌ Redis error on join-booking for ${bookingId}:`, err);
     }
   });
 
@@ -729,13 +729,13 @@ io.on("connection", (socket) => {
       timestamp: new Date().toISOString(),
     });
 
-    io.to(booking-${bookingId}).emit("booking-update", {
+    io.to(`booking-${bookingId}`).emit("booking-update", {
       status: "confirmed",
       lawyerId,
       userId,
     });
 
-    console.log(📤 Booking ${bookingId} notified to lawyer ${lawyerId});
+    console.log(`📤 Booking ${bookingId} notified to lawyer ${lawyerId}`);
   });
 
   socket.on("booking-accepted", async ({ bookingId, lawyerId, userId }) => {
@@ -749,16 +749,16 @@ io.on("connection", (socket) => {
 
     try {
       // Save session to Redis with 15 min TTL
-      await redis.set(session:${bookingId}, JSON.stringify(sessionData), 'EX', 15 * 60);
+      await redis.set(`session:${bookingId}`, JSON.stringify(sessionData), 'EX', 15 * 60);
     } catch (err) {
-      console.error(❌ Redis error saving session for booking ${bookingId}:, err);
+      console.error(`❌ Redis error saving session for booking ${bookingId}:`, err);
     }
 
-    const roomName = booking-${bookingId};
+    const roomName = `booking-${bookingId}`;
     io.to(roomName).emit("session-started", sessionData);
     io.to(userId).emit("booking-accepted", { bookingId, lawyerId, userId });
 
-    console.log(🚀 session-started emitted for room: ${roomName});
+    console.log(`🚀 session-started emitted for room: ${roomName}`);
   });
 
   // === CHAT MESSAGES ===
@@ -766,14 +766,14 @@ io.on("connection", (socket) => {
     const { bookingId, senderId, content } = data;
     if (!bookingId || !senderId || !content) return;
 
-    const roomName = booking-${bookingId};
+    const roomName = `booking-${bookingId}`;
     const msg = {
       ...data,
       timestamp: new Date().toISOString(),
       status: "delivered",
     };
 
-    console.log(💬 chat-message to ${roomName}:, msg);
+    console.log(`💬 chat-message to ${roomName}:`, msg);
     io.to(roomName).emit("new-message", msg);
   });
 
@@ -781,16 +781,16 @@ io.on("connection", (socket) => {
   socket.on("end-session", async ({ bookingId }) => {
     if (!bookingId) return;
 
-    const roomName = booking-${bookingId};
+    const roomName = `booking-${bookingId}`;
     io.to(roomName).emit("session-ended", { bookingId });
 
     try {
-      await redis.del(session:${bookingId});
+      await redis.del(`session:${bookingId}`);
     } catch (err) {
-      console.error(❌ Redis error deleting session for booking ${bookingId}:, err);
+      console.error(`❌ Redis error deleting session for booking ${bookingId}:`, err);
     }
 
-    console.log(🛑 session-ended emitted for room: ${roomName});
+    console.log(`🛑 session-ended emitted for room: ${roomName}`);
   });
 
   // === CALLS ===
@@ -808,7 +808,7 @@ io.on("connection", (socket) => {
   socket.on("call-response", ({ bookingId, status, lawyerId }) => {
     if (!bookingId || !status) return;
 
-    const roomName = booking-${bookingId};
+    const roomName = `booking-${bookingId}`;
     io.to(roomName).emit("call-status", {
       status,
       lawyerId,
@@ -829,24 +829,24 @@ io.on("connection", (socket) => {
 
   // === DISCONNECT ===
   socket.on("disconnect", () => {
-    console.log(❎ Client disconnected: ${socket.id});
+    console.log(`❎ Client disconnected: ${socket.id}`);
 
     for (const [userId, sockId] of connectedUsers) {
       if (sockId === socket.id) {
         connectedUsers.delete(userId);
-        console.log(👤 User ${userId} disconnected);
+        console.log(`👤 User ${userId} disconnected`);
       }
     }
 
     for (const [lawyerId, sockId] of connectedLawyers) {
       if (sockId === socket.id) {
         connectedLawyers.delete(lawyerId);
-        console.log(🧑‍⚖ Lawyer ${lawyerId} disconnected);
+        console.log(`🧑‍⚖ Lawyer ${lawyerId} disconnected`);
       }
     }
   });
 });
 
 server.listen(port, () => {
-  console.log(🚀 Server running on port ${port});
+  console.log(`🚀 Server running on port ${port}`);
 });

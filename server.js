@@ -878,7 +878,7 @@ setSocketIO(io);
 io.use((socket, next) => {
   const token = socket.handshake.auth?.token;
   if (!token) {
-    console.warn(❌ Connection attempt without auth token from socket ID: ${socket.id});
+    console.warn(`❌ Connection attempt without auth token from socket ID: ${socket.id}`);
     // return next(new Error("Missing authentication")); // Strict mode
   }
   next();
@@ -890,12 +890,12 @@ const connectedLawyers = new Map();
 const activeSessions = new Map(); // bookingId => sessionData
 
 io.on("connection", (socket) => {
-  console.log(✅ New client connected: ${socket.id});
+  console.log(`✅ New client connected: ${socket.id}`);
 
   socket.userData = { userId: null, userType: null, bookingRooms: [] };
 
   socket.onAny((event, ...args) => {
-    console.log(📡 [EVENT] '${event}' from socket ${socket.id}:, args);
+    console.log(`📡 [EVENT] '${event}' from socket ${socket.id}:`, args);
   });
 
   // === JOIN ROOMS ===
@@ -905,7 +905,7 @@ io.on("connection", (socket) => {
     socket.userData.userId = userId;
     connectedUsers.set(userId, socket.id);
     socket.emit("joined-user-room", { userId }); // ✅ Restored
-    console.log(👤 User ${userId} (${socket.id}) joined their personal room.);
+    console.log(`👤 User ${userId} (${socket.id}) joined their personal room.`);
   });
 
   socket.on("join-lawyer", (lawyerId) => {
@@ -914,21 +914,21 @@ io.on("connection", (socket) => {
     socket.userData.userId = lawyerId;
     connectedLawyers.set(lawyerId, socket.id);
     socket.emit("joined-lawyer-room", { lawyerId }); // ✅ Restored
-    console.log(🧑‍⚖ Lawyer ${lawyerId} (${socket.id}) joined their personal room.);
+    console.log(`🧑‍⚖ Lawyer ${lawyerId} (${socket.id}) joined their personal room.`);
   });
 
   socket.on("join-booking", (bookingId) => {
     if (!bookingId) return;
-    const roomName = booking-${bookingId};
+    const roomName = `booking-${bookingId}`;
     socket.join(roomName);
     socket.userData.bookingRooms.push(roomName);
-    console.log(📂 Socket ${socket.id} joined booking room: ${roomName});
+    console.log(`📂 Socket ${socket.id} joined booking room: ${roomName}`);
 
     // If a session was already started, immediately notify them
     if (activeSessions.has(bookingId)) {
       const sessionData = activeSessions.get(bookingId);
       socket.emit("session-started", sessionData);
-      console.log(🔁 Session for ${bookingId} was already active. Notified late-joining socket ${socket.id});
+      console.log(`🔁 Session for ${bookingId} was already active. Notified late-joining socket ${socket.id}`);
     }
   });
 
@@ -936,7 +936,7 @@ io.on("connection", (socket) => {
   socket.on("new-booking-notification", ({ lawyerId, bookingId, userId, mode, amount }) => {
     if (!lawyerId || !bookingId) return;
 
-    console.log(📤 Notifying lawyer ${lawyerId} about new booking ${bookingId} from user ${userId}.);
+    console.log(`📤 Notifying lawyer ${lawyerId} about new booking ${bookingId} from user ${userId}.`);
 
     io.to(lawyerId).emit("booking-notification", {
       bookingId,
@@ -947,7 +947,7 @@ io.on("connection", (socket) => {
     });
 
     // ✅ Restored booking-update broadcast
-    io.to(booking-${bookingId}).emit("booking-update", {
+    io.to(`booking-${bookingId}`).emit("booking-update", {
       status: "confirmed",
       lawyerId,
       userId,
@@ -955,23 +955,23 @@ io.on("connection", (socket) => {
   });
 
   socket.on("booking-accepted", ({ bookingId, lawyerId, userId }) => {
-    console.log([SERVER LOG] ✅ Received 'booking-accepted' from lawyer ${lawyerId} for booking ${bookingId}.);
+    console.log(`[SERVER LOG] ✅ Received 'booking-accepted' from lawyer ${lawyerId} for booking ${bookingId}.`);
 
     if (!bookingId || !lawyerId || !userId) {
-      console.error([SERVER ERROR] ❌ 'booking-accepted' event is missing required data.);
+      console.error(`[SERVER ERROR] ❌ 'booking-accepted' event is missing required data.`);
       return;
     }
 
-    const roomName = booking-${bookingId};
+    const roomName = `booking-${bookingId}`;
 
     // Debug check for clients in the room
     const clientsInRoom = io.sockets.adapter.rooms.get(roomName);
-    console.log([SERVER LOG] 🕵  Checking room '${roomName}' before attempting to start session.);
+    console.log(`[SERVER LOG] 🕵  Checking room '${roomName}' before attempting to start session.`);
 
     if (clientsInRoom && clientsInRoom.size > 0) {
-      console.log([SERVER LOG] ✅ SUCCESS: Found ${clientsInRoom.size} client(s) in the room. Sockets:, clientsInRoom);
+      console.log(`[SERVER LOG] ✅ SUCCESS: Found ${clientsInRoom.size} client(s) in the room. Sockets:`, clientsInRoom);
     } else {
-      console.error([SERVER ERROR] ❌ Room '${roomName}' is EMPTY. Session still created for late joiners.);
+      console.error(`[SERVER ERROR] ❌ Room '${roomName}' is EMPTY. Session still created for late joiners.`);
     }
 
     // Create and save session
@@ -984,7 +984,7 @@ io.on("connection", (socket) => {
 
     // Broadcast to booking room
     io.to(roomName).emit("session-started", sessionData);
-    console.log([SERVER LOG] 📤 Emitted 'session-started' to room '${roomName}'.);
+    console.log(`[SERVER LOG] 📤 Emitted 'session-started' to room '${roomName}'.`);
 
     // ✅ Restored direct emit to user
     io.to(userId).emit("booking-accepted", { bookingId, lawyerId, userId });
@@ -994,23 +994,23 @@ io.on("connection", (socket) => {
   socket.on("chat-message", (data) => {
     const { bookingId } = data;
     if (!bookingId) return;
-    const roomName = booking-${bookingId};
+    const roomName = `booking-${bookingId}`;
     const msg = {
       ...data,
       timestamp: new Date().toISOString(),
       status: "delivered", // ✅ Restored
     };
     io.to(roomName).emit("new-message", msg);
-    console.log(💬 chat-message broadcast to ${roomName}:, msg);
+    console.log(`💬 chat-message broadcast to ${roomName}:`, msg);
   });
 
   // === SESSION END ===
   socket.on("end-session", ({ bookingId }) => {
     if (!bookingId) return;
-    const roomName = booking-${bookingId};
+    const roomName = `booking-${bookingId}`;
     io.to(roomName).emit("session-ended", { bookingId });
     activeSessions.delete(bookingId);
-    console.log(🛑 Session ended and cleaned up for room: ${roomName});
+    console.log(`🛑 Session ended and cleaned up for room: ${roomName}`);
   });
 
   // === CALLS === (✅ Restored from old code)
@@ -1026,7 +1026,7 @@ io.on("connection", (socket) => {
 
   socket.on("call-response", ({ bookingId, status, lawyerId }) => {
     if (!bookingId || !status) return;
-    const roomName = booking-${bookingId};
+    const roomName = `booking-${bookingId}`;
     io.to(roomName).emit("call-status", {
       status,
       lawyerId,
@@ -1046,13 +1046,13 @@ io.on("connection", (socket) => {
 
   // === DISCONNECT ===
   socket.on("disconnect", (reason) => {
-    console.log(❎ Client ${socket.id} disconnected. Reason: ${reason});
+    console.log(`❎ Client ${socket.id} disconnected. Reason: ${reason}`);
 
     // Cleanup users
     for (const [userId, sockId] of connectedUsers.entries()) {
       if (sockId === socket.id) {
         connectedUsers.delete(userId);
-        console.log(👤 User ${userId} has disconnected.);
+        console.log(`👤 User ${userId} has disconnected.`);
         break;
       }
     }
@@ -1061,7 +1061,7 @@ io.on("connection", (socket) => {
     for (const [lawyerId, sockId] of connectedLawyers.entries()) {
       if (sockId === socket.id) {
         connectedLawyers.delete(lawyerId);
-        console.log(🧑‍⚖ Lawyer ${lawyerId} has disconnected.);
+        console.log(`🧑‍⚖ Lawyer ${lawyerId} has disconnected.`);
         break;
       }
     }
@@ -1069,5 +1069,6 @@ io.on("connection", (socket) => {
 });
 
 server.listen(port, () => {
-  console.log(🚀 Server running on port ${port});
+  console.log(`🚀 Server running on port ${port}`);
 });
+
